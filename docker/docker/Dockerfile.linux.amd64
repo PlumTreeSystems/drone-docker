@@ -1,4 +1,8 @@
-FROM docker:18.09.0-dind
+FROM golang:1.13
+COPY . /build
+WORKDIR /build
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -v -a -tags netgo -o bin/drone-docker ./cmd/drone-docker
 
-ADD release/linux/amd64/drone-docker /bin/
+FROM plumtreesystems/dind-with-mtu-fix:18.09
+COPY --from=0 /build/bin /bin/
 ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh", "/bin/drone-docker"]

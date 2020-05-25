@@ -1,4 +1,9 @@
-FROM plugins/docker:linux-amd64
+FROM golang:1.13
+COPY . /build
+WORKDIR /build
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -v -a -tags netgo -o bin/drone-docker ./cmd/drone-docker
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 GO111MODULE=on go build -v -a -tags netgo -o bin/drone-arc ./cmd/drone-arc
 
-ADD release/linux/amd64/drone-acr /bin/
-ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh", "/bin/drone-acr"]
+FROM plumtreesystems/dind-with-mtu-fix:18.09
+COPY --from=0 /build/bin /bin/
+ENTRYPOINT ["/usr/local/bin/dockerd-entrypoint.sh", "/bin/drone-arc"]
